@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.lease.web.app.mapper.TalkInfoMapper">
+
+    <!-- 获取聊天历史记录 -->
+    <select id="selectChatHistory" resultType="com.atguigu.lease.web.app.vo.message.TalkMessageVo">
+        SELECT
+            t.id,
+            t.content,
+            t.sender_id AS senderId,
+            u1.nickname AS senderNickname,
+            COALESCE(u1.avatar_url, 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg') AS senderAvatar,
+            t.receiver_id AS receiverId,
+            t.create_time AS createTime,
+            (t.sender_id = #{userId}) AS isSelf
+        FROM
+            talk_info t
+                LEFT JOIN
+            user_info u1 ON t.sender_id = u1.id
+        WHERE
+            t.is_deleted = 0
+          AND (
+                (t.sender_id = #{userId} AND t.receiver_id = #{targetUserId})
+                OR
+                (t.sender_id = #{targetUserId} AND t.receiver_id = #{userId})
+            )
+        ORDER BY
+            t.create_time DESC
+            LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 将消息标记为已读 -->
+    <update id="markMessagesAsRead">
+        UPDATE talk_info
+        SET is_read = 1
+        WHERE
+            sender_id = #{senderId}
+          AND receiver_id = #{receiverId}
+          AND is_read = 0
+          AND is_deleted = 0
+    </update>
+
+    <!-- 统计指定发送者和接收者之间的未读消息数 -->
+    <select id="countUnreadMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM talk_info
+        WHERE sender_id = #{senderId}
+          AND receiver_id = #{receiverId}
+          AND is_read = 0
+          AND is_deleted = 0
+    </select>
+
+    <!-- 统计指定接收者的所有未读消息总数 -->
+    <select id="countTotalUnreadMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM talk_info
+        WHERE receiver_id = #{receiverId}
+          AND is_read = 0
+          AND is_deleted = 0
+    </select>
+</mapper>

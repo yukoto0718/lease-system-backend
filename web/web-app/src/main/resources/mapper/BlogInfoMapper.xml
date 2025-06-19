@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.lease.web.app.mapper.BlogInfoMapper">
+
+    <!-- 定义结果映射 -->
+    <resultMap id="BlogListVoMap" type="com.atguigu.lease.web.app.vo.blog.BlogListVo">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="liked" column="liked"/>
+        <result property="comments" column="comments"/>
+        <result property="createTime" column="create_time"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar_url"/>
+
+        <!-- 图片集合的嵌套映射  -->
+        <collection property="imageList" ofType="com.atguigu.lease.web.app.vo.blog.BlogGraphVo">
+            <result property="name" column="graph_name"/>
+            <result property="url" column="graph_url"/>
+        </collection>
+    </resultMap>
+
+    <!-- 定义查询语句 -->
+    <select id="selectBlogList" resultMap="BlogListVoMap">
+        SELECT
+            b.id,
+            b.user_id,
+            b.title,
+            b.content,
+            b.liked,
+            (SELECT COUNT(*) FROM blog_comment_info WHERE blog_id = b.id AND is_deleted = 0) as comments,
+            b.create_time,
+            u.nickname,
+            u.avatar_url,
+            bg.id as graph_id,
+            bg.name as graph_name,
+            bg.url as graph_url
+        FROM
+            blog_info b
+                LEFT JOIN
+            user_info u ON b.user_id = u.id
+                LEFT JOIN
+            blog_graph_info bg ON b.id = bg.blog_id AND bg.is_deleted = 0
+        WHERE
+            b.is_deleted = 0
+        ORDER BY
+            b.create_time DESC
+    </select>
+
+    <!-- 博客详情映射 - 没有用户信息，与原VO保持一致 -->
+    <resultMap id="BlogDetailMap" type="com.atguigu.lease.web.app.vo.blog.BlogDetailVo">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="liked" column="liked"/>
+        <result property="comments" column="comments"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <collection property="imageList" ofType="com.atguigu.lease.web.app.vo.blog.BlogGraphVo">
+            <result property="name" column="graph_name"/>
+            <result property="url" column="graph_url"/>
+        </collection>
+    </resultMap>
+
+    <!-- 优化后的博客详情查询，一次性查询博客和图片信息 -->
+    <select id="selectBlogDetailWithImages" resultMap="BlogDetailMap">
+        SELECT
+        b.id,
+        b.user_id,
+        b.title,
+        b.content,
+        b.liked,
+        (SELECT COUNT(*) FROM blog_comment_info WHERE blog_id = b.id AND is_deleted = 0) as comments,
+        b.create_time,
+        b.update_time,
+        u.nickname,
+        u.avatar_url as avatar,
+        g.id as graph_id,
+        g.name as graph_name,
+        g.url as graph_url
+        FROM
+        blog_info b
+        LEFT JOIN
+        user_info u ON b.user_id = u.id
+        LEFT JOIN
+        blog_graph_info g ON b.id = g.blog_id AND g.is_deleted = 0
+        WHERE
+        b.id = #{id}
+        AND b.is_deleted = 0
+    </select>
+
+    <!-- 查询特定用户的博客列表 -->
+    <select id="selectUserBlogList" resultMap="BlogListVoMap">
+        SELECT
+            b.id,
+            b.user_id,
+            b.title,
+            b.content,
+            b.liked,
+            (SELECT COUNT(*) FROM blog_comment_info WHERE blog_id = b.id AND is_deleted = 0) as comments,
+            b.create_time,
+            u.nickname,
+            u.avatar_url,
+            bg.id as graph_id,
+            bg.name as graph_name,
+            bg.url as graph_url
+        FROM
+            blog_info b
+                LEFT JOIN
+            user_info u ON b.user_id = u.id
+                LEFT JOIN
+            blog_graph_info bg ON b.id = bg.blog_id AND bg.is_deleted = 0
+        WHERE
+            b.is_deleted = 0
+          AND b.user_id = #{userId}
+        ORDER BY
+            b.create_time DESC
+    </select>
+</mapper>

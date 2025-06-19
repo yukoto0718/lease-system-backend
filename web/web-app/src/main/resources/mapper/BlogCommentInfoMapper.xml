@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.lease.web.app.mapper.BlogCommentInfoMapper">
+
+    <!-- 基础的评论实体映射 -->
+    <resultMap id="BaseCommentMap" type="com.atguigu.lease.model.entity.BlogCommentInfo">
+        <id property="id" column="id"/>
+        <result property="blogId" column="blog_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="replyUserId" column="reply_user_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <!-- 评论VO对象映射，包含用户信息和子评论 -->
+    <resultMap id="CommentVoMap" type="com.atguigu.lease.web.app.vo.blog.CommentVo">
+        <id property="id" column="id"/>
+        <result property="blogId" column="blog_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="replyUserId" column="reply_user_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+
+        <!-- 评论者信息映射 -->
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar_url"/>
+
+        <!-- 被回复用户的昵称映射 -->
+        <result property="replyUserNickname" column="reply_nickname"/>
+
+        <!-- 子评论映射，使用嵌套查询 -->
+        <collection property="children" ofType="com.atguigu.lease.web.app.vo.blog.CommentVo"
+                    select="selectChildComments" column="id"/>
+    </resultMap>
+
+    <!-- 获取博客所有评论实体 (用于原有方法，不含用户信息) -->
+    <select id="selectCommentsByBlogId" resultMap="BaseCommentMap">
+        SELECT
+            id, blog_id, user_id, content, parent_id, reply_user_id,
+            create_time, update_time, is_deleted
+        FROM
+            blog_comment_info
+        WHERE
+            blog_id = #{blogId}
+          AND is_deleted = 0
+        ORDER BY
+            create_time DESC
+    </select>
+
+    <!--
+        获取博客的一级评论列表，包含用户信息
+        通过LEFT JOIN直接获取用户数据，减少N+1查询
+    -->
+    <select id="selectRootCommentsByBlogId" resultMap="CommentVoMap">
+        SELECT
+            c.id,
+            c.blog_id,
+            c.user_id,
+            c.content,
+            c.parent_id,
+            c.reply_user_id,
+            c.create_time,
+            c.update_time,
+            u.nickname,
+            u.avatar_url,
+            ru.nickname as reply_nickname
+        FROM
+            blog_comment_info c
+                LEFT JOIN
+            user_info u ON c.user_id = u.id
+                LEFT JOIN
+            user_info ru ON c.reply_user_id = ru.id
+        WHERE
+            c.blog_id = #{blogId}
+          AND c.is_deleted = 0
+          AND c.parent_id IS NULL
+        ORDER BY
+            c.create_time DESC
+    </select>
+
+    <!--
+        获取子评论，使用相同的映射模式
+        在一级评论查询中被调用获取子评论
+    -->
+    <select id="selectChildComments" resultMap="CommentVoMap">
+        SELECT
+            c.id,
+            c.blog_id,
+            c.user_id,
+            c.content,
+            c.parent_id,
+            c.reply_user_id,
+            c.create_time,
+            c.update_time,
+            u.nickname,
+            u.avatar_url,
+            ru.nickname as reply_nickname
+        FROM
+            blog_comment_info c
+                LEFT JOIN
+            user_info u ON c.user_id = u.id
+                LEFT JOIN
+            user_info ru ON c.reply_user_id = ru.id
+        WHERE
+            c.parent_id = #{id}
+          AND c.is_deleted = 0
+        ORDER BY
+            c.create_time ASC
+    </select>
+
+    <!--
+        获取评论及其子评论总数
+        用于计算删除评论时需要减少的计数
+    -->
+    <select id="countCommentAndChildren" resultType="int">
+        SELECT
+            COUNT(1)
+        FROM
+            blog_comment_info
+        WHERE
+            (id = #{commentId} OR parent_id = #{commentId})
+          AND is_deleted = 0
+    </select>
+
+    <!--
+        批量逻辑删除评论和子评论
+        一次性批量更新提高性能
+    -->
+    <update id="logicalDeleteCommentAndChildren">
+        UPDATE blog_comment_info
+        SET is_deleted = 1
+        WHERE (id = #{commentId} OR parent_id = #{commentId})
+          AND is_deleted = 0
+    </update>
+
+    <!-- 带权限检查的评论删除操作 -->
+    <update id="logicalDeleteCommentWithPermissionCheck">
+        UPDATE blog_comment_info
+        SET is_deleted = 1
+        WHERE (id = #{commentId} OR parent_id = #{commentId})
+          AND is_deleted = 0
+          AND (
+            -- 条件1：当前用户是评论作者
+                    user_id = #{userId}
+                OR
+                -- 条件2：当前用户是博客作者
+                    EXISTS (
+                        SELECT 1 FROM blog_info b
+                        WHERE b.id = blog_id AND b.user_id = #{userId} AND b.is_deleted = 0
+                    )
+            )
+    </update>
+
+    <!-- 获取受影响的评论行数，用于验证权限和更新评论计数 -->
+    <select id="countAffectedCommentRows" resultType="int">
+        SELECT COUNT(1)
+        FROM blog_comment_info c
+        WHERE (c.id = #{commentId} OR c.parent_id = #{commentId})
+          AND c.is_deleted = 0
+          AND (
+                    c.user_id = #{userId}
+                OR
+                    EXISTS (
+                        SELECT 1 FROM blog_info b
+                        WHERE b.id = c.blog_id AND b.user_id = #{userId} AND b.is_deleted = 0
+                    )
+            )
+    </select>
+
+    <!-- 安全更新博客评论计数  -->
+    <update id="updateBlogCommentCountSafely">
+        UPDATE blog_info
+        SET comments = CASE
+                           WHEN comments >= #{decrementBy} THEN comments - #{decrementBy}
+                           ELSE 0
+            END
+        WHERE id = #{blogId} AND is_deleted = 0
+    </update>
+</mapper>

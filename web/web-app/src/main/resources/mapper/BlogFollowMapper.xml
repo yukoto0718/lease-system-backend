@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.lease.web.app.mapper.BlogFollowMapper">
+
+    <!-- 查询用户关注列表 -->
+    <select id="selectFollowingList" resultType="com.atguigu.lease.web.app.vo.message.FollowUserVo">
+        SELECT
+        u.id as userId,
+        u.nickname,
+        COALESCE(u.avatar_url, 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg') as avatarUrl,
+        (SELECT COUNT(1) FROM blog_follow WHERE user_id = u.id AND follow_user_id = #{userId}) > 0 as mutualFollow
+        FROM
+        blog_follow f
+        JOIN user_info u ON f.follow_user_id = u.id
+        WHERE
+        f.user_id = #{userId}
+        <if test="keyword != null and keyword != ''">
+            AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY
+        f.create_time DESC
+    </select>
+
+    <!-- 查询用户粉丝列表 -->
+    <select id="selectFollowerList" resultType="com.atguigu.lease.web.app.vo.message.FollowUserVo">
+        SELECT
+        u.id as userId,
+        u.nickname,
+        COALESCE(u.avatar_url, 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg') as avatarUrl,
+        (SELECT COUNT(1) FROM blog_follow WHERE user_id = #{userId} AND follow_user_id = u.id) > 0 as mutualFollow
+        FROM
+        blog_follow f
+        JOIN user_info u ON f.user_id = u.id
+        WHERE
+        f.follow_user_id = #{userId}
+        <if test="keyword != null and keyword != ''">
+            AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY
+        f.create_time DESC
+    </select>
+
+    <!-- 查询用户互相关注列表 -->
+    <select id="selectMutualFollowList" resultType="com.atguigu.lease.web.app.vo.message.FollowUserVo">
+        SELECT
+        u.id as userId,
+        u.nickname,
+        COALESCE(u.avatar_url, 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg') as avatarUrl,
+        TRUE as mutualFollow
+        FROM
+        blog_follow f1
+        JOIN blog_follow f2 ON f1.follow_user_id = f2.user_id AND f1.user_id = f2.follow_user_id
+        JOIN user_info u ON f1.follow_user_id = u.id
+        WHERE
+        f1.user_id = #{userId}
+        <if test="keyword != null and keyword != ''">
+            AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY
+        f1.create_time DESC
+    </select>
+
+    <!-- 检查是否存在关注关系 -->
+    <select id="checkFollowRelation" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1)
+        FROM
+            blog_follow
+        WHERE
+            user_id = #{userId}
+          AND follow_user_id = #{followUserId}
+    </select>
+</mapper>
