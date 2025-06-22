@@ -318,10 +318,6 @@ maxmemory 48mb                                  # Redisメモリ制限
 🔗 **関連リポジトリ**
 - [尚硅谷Java项目【尚庭公寓】从0开始Java项目实战](https://www.bilibili.com/video/BV1At421K7gP/)
 
-**類似プロジェクトの参考**
-公開講座を参考に開発したもので、他の方の類似実装も参考として紹介します。
-- [chaofengdev/shangting-lease](https://github.com/chaofengdev/shangting-lease.git)
-
 **画像**
 プロジェクトの画像は、中国の「冠寓」の公開コンテンツに基づいています。
 
@@ -333,6 +329,7 @@ maxmemory 48mb                                  # Redisメモリ制限
 * **フロントエンド(管理画面)**:rentHouseAdmin🔒 未公開
 * **フロントエンド(モバイル端)**:rentHouseH5🔒 未公開
 * **デプロイ**: lease-docker-project 🔒 未公開
+
 現在、フロントエンドプロジェクト（H5端・管理端）およびDocker構成ファイルは非公開ですが、今後公開する予定です。
 
 #### 最後に
