@@ -16,7 +16,10 @@
 - [Project Structure](#project-structure)
 - [Environment Setup & Deployment](#environment-setup--deployment)
 - [References](#references)
-- [Others](#others)
+
+### Project Deployment - AWS EC2 Deployment Guide
+[lease-docker-project](https://github.com/yukoto0718/lease-docker-project.git) 
+
 
 ## Project Background
 
@@ -31,7 +34,7 @@
 This demo site is deployed on AWS EC2 (t2.micro, 1-year free tier) and operates temporarily for portfolio demonstration purposes.
 
 ### Mobile App
-Demo URL: http://54.95.189.69
+Demo URL: http://57.183.57.12
 
 ① Verification Code Login:
 Log in using a verification code sent to your email address, and you will be automatically registered as a new user.
@@ -42,7 +45,7 @@ User ②: `Username: 13212345678 Password: 123456`
 User ③: `Username: 13312345678 Password: 123456`  
 
 ### Admin Panel
-Demo URL: http://54.95.189.69:8888
+Demo URL: http://57.183.57.12:8888
 `Username: user Password: 123456` 
 
 > **🔤 About Multi-language Support**  
@@ -313,17 +316,3 @@ maxmemory 48mb                                  # Redis memory limitation
 **Images**
 The project images are based on publicly available content from "冠寓", a Chinese apartment platform.
 
-## Others
-#### 📅 Publication Schedule
-
-Backend: lease-system-backend ✅ Published
-Translation Tool: chinese-to-japanese ✅ Published
-Frontend (Admin Panel): rentHouseAdmin 🔒 Unpublished
-Frontend (Mobile App): rentHouseH5 🔒 Unpublished
-Deployment: lease-docker-project 🔒 Unpublished
-
-Currently, the frontend projects (H5 and admin) and Docker configuration files are private, but we plan to make them public in the future.
-
-#### Finally
-
-If this was helpful, we would appreciate a Star. Thank you!

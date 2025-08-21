@@ -38,8 +38,8 @@ build/
 .DS_Store
 
 # Ignore specific application.yml files
-web/web-admin/src/main/resources/application.yml
-web/web-app/src/main/resources/application.yml
+#web/web-admin/src/main/resources/application.yml
+#web/web-app/src/main/resources/application.yml
 
 
 # 忽略所有logs目录
