@@ -34,7 +34,7 @@
 This demo site is deployed on AWS EC2 (t2.micro, 1-year free tier) and operates temporarily for portfolio demonstration purposes.
 
 ### Mobile App
-Demo URL: http://57.183.57.12
+Demo URL: https://uplus-lease.online
 
 ① Verification Code Login:
 Log in using a verification code sent to your email address, and you will be automatically registered as a new user.
@@ -45,7 +45,7 @@ User ②: `Username: 13212345678 Password: 123456`
 User ③: `Username: 13312345678 Password: 123456`  
 
 ### Admin Panel
-Demo URL: http://57.183.57.12:8888
+Demo URL: https://uplus-lease.online/admin
 `Username: user Password: 123456` 
 
 > **🔤 About Multi-language Support**  

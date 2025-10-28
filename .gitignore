@@ -49,3 +49,5 @@ logs/
 # 忽略所有日志文件
 *.log
 *.log.*
+
+application.yml
